@@ -37,7 +37,11 @@ class HealthCareChartViewModel: ObservableObject {
 
         Task {
             await requestWriteAccessToHealthData()
-            calculateStepCount()
+            calculateStepCount(frequency: .daily)
+            calculateStepCount(frequency: .weekly)
+            calculateStepCount(frequency: .monthly)
+            calculateStepCount(frequency: .everySixMonths)
+            calculateStepCount(frequency: .yearly)
         }
     }
 
@@ -60,22 +64,92 @@ class HealthCareChartViewModel: ObservableObject {
     }
 
     /// ヘルスデータの読み込み
-    func calculateStepCount() {
+    func calculateStepCount(frequency: Frequency) {
+        switch frequency {
+        case .daily: print("daily")
+        case .weekly: calculateStepCountWeekly()
+        case .monthly: print("monthly")
+        case .everySixMonths: print("everySixMonths")
+        case .yearly: print("yearly")
+        }
+    }
+
+    /// 日ごと
+    private func calculateStepCountDaily() {
         guard let stepType = HKSampleType.quantityType(forIdentifier: .stepCount) else {
             isShowingError = true
             errorMessage = "ヘルスデータの読み込みに失敗しました。😢"
             return
         }
-        let today = Date()
-        let sevenDaysAgo = Calendar.current.date(byAdding: .day, value: -7, to: today)!
+
+        let startDate = Calendar.current.date(byAdding: .day, value: -7, to: Date())!
+        let endDate = Date()
         let daily = DateComponents(day: 1)
-        let predicate = HKQuery.predicateForSamples(withStart: sevenDaysAgo, end: today)
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate)
 
         let query = HKStatisticsCollectionQuery(
             quantityType: stepType,
             quantitySamplePredicate: predicate,
             options: [.cumulativeSum],
-            anchorDate: sevenDaysAgo,
+            anchorDate: startDate,
+            intervalComponents: daily
+        )
+
+        query.initialResultsHandler = { [weak self] query, statisticsCollection, error in
+            guard let self else { return }
+
+            if statisticsCollection == nil || error != nil {
+                DispatchQueue.main.async {
+                    self.isShowingError = true
+                    self.errorMessage = error?.localizedDescription ?? "予測できないエラーが発生しました。😢"
+                }
+                return
+            }
+
+            if let statisticsCollection {
+                self.updateUIFromStatistics(statisticsCollection)
+            }
+        }
+
+        /// バックグラウンドで更新されてもデータを取得できるように
+        query.statisticsUpdateHandler = { [weak self] query, statistics, statisticsCollection, error in
+            guard let self else { return }
+
+            if statisticsCollection == nil || error != nil {
+                DispatchQueue.main.async {
+                    self.isShowingError = true
+                    self.errorMessage = error?.localizedDescription ?? "予測できないエラーが発生しました。😢"
+                }
+                return
+            }
+
+            if let statisticsCollection {
+                self.updateUIFromStatistics(statisticsCollection)
+            }
+        }
+
+        healthStore?.execute(query)
+        self.query = query
+    }
+
+    /// 週ごと
+    private func calculateStepCountWeekly() {
+        guard let stepType = HKSampleType.quantityType(forIdentifier: .stepCount) else {
+            isShowingError = true
+            errorMessage = "ヘルスデータの読み込みに失敗しました。😢"
+            return
+        }
+
+        let startDate = Calendar.current.date(byAdding: .day, value: -7, to: Date())!
+        let endDate = Date()
+        let daily = DateComponents(day: 1)
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate)
+
+        let query = HKStatisticsCollectionQuery(
+            quantityType: stepType,
+            quantitySamplePredicate: predicate,
+            options: [.cumulativeSum],
+            anchorDate: startDate,
             intervalComponents: daily
         )
 
