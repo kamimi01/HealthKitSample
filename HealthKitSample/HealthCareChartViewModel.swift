@@ -73,9 +73,9 @@ class HealthCareChartViewModel: ObservableObject {
         switch frequency {
         case .hourly: calculateStepCountDaily()
         case .weekly: calculateStepCountWeekly()
-        case .monthly: print("monthly")
-        case .everySixMonths: print("everySixMonths")
-        case .yearly: print("yearly")
+        case .monthly: calculateStepCountMonthly()
+        case .everySixMonths: calculateStepCountEverySixMonths()
+        case .yearly: calculateStepCountYealy()
         }
     }
 
@@ -200,6 +200,180 @@ class HealthCareChartViewModel: ObservableObject {
         self.query = query
     }
 
+    /// 月ごと
+    private func calculateStepCountMonthly() {
+        guard let stepType = HKSampleType.quantityType(forIdentifier: .stepCount) else {
+            isShowingError = true
+            errorMessage = "ヘルスデータの読み込みに失敗しました。😢"
+            return
+        }
+
+        let startDate = Calendar.current.date(byAdding: .day, value: -30, to: Date())!
+        let endDate = Date()
+        let daily = DateComponents(day: 1)
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate)
+
+        let query = HKStatisticsCollectionQuery(
+            quantityType: stepType,
+            quantitySamplePredicate: predicate,
+            options: [.cumulativeSum],
+            anchorDate: startDate,
+            intervalComponents: daily
+        )
+
+        query.initialResultsHandler = { [weak self] query, statisticsCollection, error in
+            guard let self else { return }
+
+            if statisticsCollection == nil || error != nil {
+                DispatchQueue.main.async {
+                    self.isShowingError = true
+                    self.errorMessage = error?.localizedDescription ?? "予測できないエラーが発生しました。😢"
+                }
+                return
+            }
+
+            if let statisticsCollection {
+                self.updateUIFromStatistics(statisticsCollection, frequency: .monthly, startDate: startDate, endDate: endDate)
+            }
+        }
+
+        /// バックグラウンドで更新されてもデータを取得できるように
+        query.statisticsUpdateHandler = { [weak self] query, statistics, statisticsCollection, error in
+            guard let self else { return }
+
+            if statisticsCollection == nil || error != nil {
+                DispatchQueue.main.async {
+                    self.isShowingError = true
+                    self.errorMessage = error?.localizedDescription ?? "予測できないエラーが発生しました。😢"
+                }
+                return
+            }
+
+            if let statisticsCollection {
+                self.updateUIFromStatistics(statisticsCollection, frequency: .monthly, startDate: startDate, endDate: endDate)
+            }
+        }
+
+        healthStore?.execute(query)
+        self.query = query
+    }
+
+    /// 6ヶ月ごと
+    private func calculateStepCountEverySixMonths() {
+        guard let stepType = HKSampleType.quantityType(forIdentifier: .stepCount) else {
+            isShowingError = true
+            errorMessage = "ヘルスデータの読み込みに失敗しました。😢"
+            return
+        }
+
+        let startDate = Calendar.current.date(byAdding: .day, value: -30 * 6, to: Date())!
+        let endDate = Date()
+        let monthly = DateComponents(month: 1)
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate)
+
+        let query = HKStatisticsCollectionQuery(
+            quantityType: stepType,
+            quantitySamplePredicate: predicate,
+            options: [.cumulativeSum],
+            anchorDate: startDate,
+            intervalComponents: monthly
+        )
+
+        query.initialResultsHandler = { [weak self] query, statisticsCollection, error in
+            guard let self else { return }
+
+            if statisticsCollection == nil || error != nil {
+                DispatchQueue.main.async {
+                    self.isShowingError = true
+                    self.errorMessage = error?.localizedDescription ?? "予測できないエラーが発生しました。😢"
+                }
+                return
+            }
+
+            if let statisticsCollection {
+                self.updateUIFromStatistics(statisticsCollection, frequency: .everySixMonths, startDate: startDate, endDate: endDate)
+            }
+        }
+
+        /// バックグラウンドで更新されてもデータを取得できるように
+        query.statisticsUpdateHandler = { [weak self] query, statistics, statisticsCollection, error in
+            guard let self else { return }
+
+            if statisticsCollection == nil || error != nil {
+                DispatchQueue.main.async {
+                    self.isShowingError = true
+                    self.errorMessage = error?.localizedDescription ?? "予測できないエラーが発生しました。😢"
+                }
+                return
+            }
+
+            if let statisticsCollection {
+                self.updateUIFromStatistics(statisticsCollection, frequency: .everySixMonths, startDate: startDate, endDate: endDate)
+            }
+        }
+
+        healthStore?.execute(query)
+        self.query = query
+    }
+
+    /// 年ごと
+    private func calculateStepCountYealy() {
+        guard let stepType = HKSampleType.quantityType(forIdentifier: .stepCount) else {
+            isShowingError = true
+            errorMessage = "ヘルスデータの読み込みに失敗しました。😢"
+            return
+        }
+
+        let startDate = Calendar.current.date(byAdding: .day, value: -30 * 12, to: Date())!
+        let endDate = Date()
+        let monthly = DateComponents(month: 1)
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate)
+
+        let query = HKStatisticsCollectionQuery(
+            quantityType: stepType,
+            quantitySamplePredicate: predicate,
+            options: [.cumulativeSum],
+            anchorDate: startDate,
+            intervalComponents: monthly
+        )
+
+        query.initialResultsHandler = { [weak self] query, statisticsCollection, error in
+            guard let self else { return }
+
+            if statisticsCollection == nil || error != nil {
+                DispatchQueue.main.async {
+                    self.isShowingError = true
+                    self.errorMessage = error?.localizedDescription ?? "予測できないエラーが発生しました。😢"
+                }
+                return
+            }
+
+            if let statisticsCollection {
+                self.updateUIFromStatistics(statisticsCollection, frequency: .yearly, startDate: startDate, endDate: endDate)
+            }
+        }
+
+        /// バックグラウンドで更新されてもデータを取得できるように
+        query.statisticsUpdateHandler = { [weak self] query, statistics, statisticsCollection, error in
+            guard let self else { return }
+
+            if statisticsCollection == nil || error != nil {
+                DispatchQueue.main.async {
+                    self.isShowingError = true
+                    self.errorMessage = error?.localizedDescription ?? "予測できないエラーが発生しました。😢"
+                }
+                return
+            }
+
+            if let statisticsCollection {
+                self.updateUIFromStatistics(statisticsCollection, frequency: .yearly, startDate: startDate, endDate: endDate)
+            }
+        }
+
+        healthStore?.execute(query)
+        self.query = query
+    }
+
     private func updateUIFromStatistics(_ statisticsCollection: HKStatisticsCollection, frequency: Frequency, startDate: Date, endDate: Date) {
 
         statisticsCollection.enumerateStatistics(from: startDate, to: endDate) { [weak self] statistics, stop in
@@ -219,12 +393,16 @@ class HealthCareChartViewModel: ObservableObject {
             DispatchQueue.main.async {
                 switch frequency {
                 case .hourly:
-                    print("dataだよ１：", dataValue)
                     self.hourlySteps.append(dataValue)
-                case .weekly: self.weeklySteps.append(dataValue)
-                case .monthly: self.monthlySteps.append(dataValue)
-                case .everySixMonths: self.everySixMonthsSteps.append(dataValue)
-                case .yearly: self.yearlySteps.append(dataValue)
+                case .weekly:
+                    self.weeklySteps.append(dataValue)
+                case .monthly:
+                    self.monthlySteps.append(dataValue)
+                case .everySixMonths:
+                    self.everySixMonthsSteps.append(dataValue)
+                case .yearly:
+                    print("dataだよ１：", dataValue)
+                    self.yearlySteps.append(dataValue)
                 }
             }
         }

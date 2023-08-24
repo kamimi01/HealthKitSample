@@ -76,15 +76,36 @@ private extension HealthCareChartView {
     }
 
     func monthlyChart() -> some View {
-        Text("月")
+        Chart {
+            ForEach(viewModel.monthlySteps) { item in
+                BarMark(
+                    x: .value("日付", item.startDate, unit: .day),
+                    y: .value("歩数", item.value)
+                )
+            }
+        }
     }
 
     func everySixMonthsChart() -> some View {
-        Text("6ヶ月ごと")
+        Chart {
+            ForEach(viewModel.everySixMonthsSteps) { item in
+                BarMark(
+                    x: .value("月", item.startDate, unit: .month),
+                    y: .value("歩数", item.value)
+                )
+            }
+        }
     }
 
     func yearlyChart() -> some View {
-        Text("年")
+        Chart {
+            ForEach(viewModel.yearlySteps) { item in
+                BarMark(
+                    x: .value("月", item.startDate, unit: .month),
+                    y: .value("歩数", item.value)
+                )
+            }
+        }
     }
 }
 
