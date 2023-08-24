@@ -217,9 +217,10 @@ class HealthCareChartViewModel: ObservableObject {
             dataValue.value = quantity.doubleValue(for: unit)
 
             DispatchQueue.main.async {
-                print("dataだよ：", dataValue)
                 switch frequency {
-                case .hourly: self.hourlySteps.append(dataValue)
+                case .hourly:
+                    print("dataだよ１：", dataValue)
+                    self.hourlySteps.append(dataValue)
                 case .weekly: self.weeklySteps.append(dataValue)
                 case .monthly: self.monthlySteps.append(dataValue)
                 case .everySixMonths: self.everySixMonthsSteps.append(dataValue)

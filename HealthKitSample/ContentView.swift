@@ -54,7 +54,14 @@ struct HealthCareChartView: View {
 
 private extension HealthCareChartView {
     func dailyChart() -> some View {
-        Text("日")
+        Chart {
+            ForEach(viewModel.hourlySteps) { item in
+                BarMark(
+                    x: .value("時間", item.startDate, unit: .hour),
+                    y: .value("歩数", item.value)
+                )
+            }
+        }
     }
 
     func weeklyChart() -> some View {
