@@ -16,8 +16,13 @@ class HealthCareChartViewModel: ObservableObject {
     @SwiftUI.Published var isShowingError = false
     @SwiftUI.Published private(set) var errorMessage = ""
     /// 毎日の歩数
-    @SwiftUI.Published private(set) var dailySteps: [HealthDataTypeValue] = []
-    @SwiftUI.Published var selectedFrequency: Frequency = .daily
+    @SwiftUI.Published private(set) var hourlySteps: [HealthDataTypeValue] = []
+    @SwiftUI.Published private(set) var weeklySteps: [HealthDataTypeValue] = []
+    @SwiftUI.Published private(set) var monthlySteps: [HealthDataTypeValue] = []
+    @SwiftUI.Published private(set) var everySixMonthsSteps: [HealthDataTypeValue] = []
+    @SwiftUI.Published private(set) var yearlySteps: [HealthDataTypeValue] = []
+
+    @SwiftUI.Published var selectedFrequency: Frequency = .hourly
 
     private var healthStore: HKHealthStore?
     private var query: HKStatisticsCollectionQuery?
@@ -37,7 +42,7 @@ class HealthCareChartViewModel: ObservableObject {
 
         Task {
             await requestWriteAccessToHealthData()
-            calculateStepCount(frequency: .daily)
+            calculateStepCount(frequency: .hourly)
             calculateStepCount(frequency: .weekly)
             calculateStepCount(frequency: .monthly)
             calculateStepCount(frequency: .everySixMonths)
@@ -66,7 +71,7 @@ class HealthCareChartViewModel: ObservableObject {
     /// ヘルスデータの読み込み
     func calculateStepCount(frequency: Frequency) {
         switch frequency {
-        case .daily: print("daily")
+        case .hourly: calculateStepCountDaily()
         case .weekly: calculateStepCountWeekly()
         case .monthly: print("monthly")
         case .everySixMonths: print("everySixMonths")
@@ -82,17 +87,22 @@ class HealthCareChartViewModel: ObservableObject {
             return
         }
 
-        let startDate = Calendar.current.date(byAdding: .day, value: -7, to: Date())!
-        let endDate = Date()
-        let daily = DateComponents(day: 1)
-        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate)
+        let startOfDay = Calendar.current.startOfDay(for: Date())
+        var endOfDay: Date {
+            var components = DateComponents()
+            components.day = 1
+            components.second = -1
+            return Calendar.current.date(byAdding: components, to: startOfDay)!
+        }
+        let hourly = DateComponents(hour: 1)
+        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: endOfDay)
 
         let query = HKStatisticsCollectionQuery(
             quantityType: stepType,
             quantitySamplePredicate: predicate,
             options: [.cumulativeSum],
-            anchorDate: startDate,
-            intervalComponents: daily
+            anchorDate: startOfDay,
+            intervalComponents: hourly
         )
 
         query.initialResultsHandler = { [weak self] query, statisticsCollection, error in
@@ -107,7 +117,7 @@ class HealthCareChartViewModel: ObservableObject {
             }
 
             if let statisticsCollection {
-                self.updateUIFromStatistics(statisticsCollection)
+                self.updateUIFromStatistics(statisticsCollection, frequency: .hourly, startDate: startOfDay, endDate: endOfDay)
             }
         }
 
@@ -124,7 +134,7 @@ class HealthCareChartViewModel: ObservableObject {
             }
 
             if let statisticsCollection {
-                self.updateUIFromStatistics(statisticsCollection)
+                self.updateUIFromStatistics(statisticsCollection, frequency: .hourly, startDate: startOfDay, endDate: endOfDay)
             }
         }
 
@@ -165,7 +175,7 @@ class HealthCareChartViewModel: ObservableObject {
             }
 
             if let statisticsCollection {
-                self.updateUIFromStatistics(statisticsCollection)
+                self.updateUIFromStatistics(statisticsCollection, frequency: .weekly, startDate: startDate, endDate: endDate)
             }
         }
 
@@ -182,7 +192,7 @@ class HealthCareChartViewModel: ObservableObject {
             }
 
             if let statisticsCollection {
-                self.updateUIFromStatistics(statisticsCollection)
+                self.updateUIFromStatistics(statisticsCollection, frequency: .weekly, startDate: startDate, endDate: endDate)
             }
         }
 
@@ -190,11 +200,7 @@ class HealthCareChartViewModel: ObservableObject {
         self.query = query
     }
 
-    private func updateUIFromStatistics(_ statisticsCollection: HKStatisticsCollection) {
-
-        let today = Date()
-        let startDate = Calendar.current.date(byAdding: .day, value: -7, to: today)!
-        let endDate = today
+    private func updateUIFromStatistics(_ statisticsCollection: HKStatisticsCollection, frequency: Frequency, startDate: Date, endDate: Date) {
 
         statisticsCollection.enumerateStatistics(from: startDate, to: endDate) { [weak self] statistics, stop in
             guard let self else { return }
@@ -212,7 +218,13 @@ class HealthCareChartViewModel: ObservableObject {
 
             DispatchQueue.main.async {
                 print("dataだよ：", dataValue)
-                self.dailySteps.append(dataValue)
+                switch frequency {
+                case .hourly: self.hourlySteps.append(dataValue)
+                case .weekly: self.weeklySteps.append(dataValue)
+                case .monthly: self.monthlySteps.append(dataValue)
+                case .everySixMonths: self.everySixMonthsSteps.append(dataValue)
+                case .yearly: self.yearlySteps.append(dataValue)
+                }
             }
         }
     }

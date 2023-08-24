@@ -10,7 +10,7 @@ import SwiftUI
 import Charts
 
 enum Frequency: String, CaseIterable, Identifiable {
-    case daily = "日"
+    case hourly = "日"
     case weekly = "週"
     case monthly = "月"
     case everySixMonths = "6ヶ月ごと"
@@ -32,7 +32,7 @@ struct HealthCareChartView: View {
             .pickerStyle(SegmentedPickerStyle())
 
             switch viewModel.selectedFrequency {
-            case .daily: dailyChart()
+            case .hourly: dailyChart()
             case .weekly: weeklyChart()
             case .monthly: monthlyChart()
             case .everySixMonths: everySixMonthsChart()
@@ -59,7 +59,7 @@ private extension HealthCareChartView {
 
     func weeklyChart() -> some View {
         Chart {
-            ForEach(viewModel.dailySteps) { item in
+            ForEach(viewModel.weeklySteps) { item in
                 BarMark(
                     x: .value("日付", item.startDate, unit: .day),
                     y: .value("歩数", item.value)
