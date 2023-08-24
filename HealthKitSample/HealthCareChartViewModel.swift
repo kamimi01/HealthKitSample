@@ -230,20 +230,6 @@ class HealthCareChartViewModel: ObservableObject {
         }
     }
 
-//    private func createAnchorDate() -> Date {
-//        // Set the arbitrary anchor date to Monday at 3:00 a.m.
-//        let calendar: Calendar = .current
-//        var anchorComponents = calendar.dateComponents([.day, .month, .year, .weekday], from: Date())
-//        let offset = (7 + (anchorComponents.weekday ?? 0) - 2) % 7
-//
-//        anchorComponents.day! -= offset
-//        anchorComponents.hour = 3
-//
-//        let anchorDate = calendar.date(from: anchorComponents)!
-//
-//        return anchorDate
-//    }
-
     func onDisappear() {
         if let query {
             healthStore?.stop(query)
