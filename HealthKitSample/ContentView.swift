@@ -73,6 +73,16 @@ private extension HealthCareChartView {
                 )
             }
         }
+        .chartXAxis {
+            AxisMarks(values: .stride(by: .day, count: 1)) { value in
+                if let date = value.as(Date.self) {
+                    AxisValueLabel(format: .dateTime.weekday())
+                }
+
+                AxisGridLine()
+                AxisTick()
+            }
+        }
     }
 
     func monthlyChart() -> some View {
