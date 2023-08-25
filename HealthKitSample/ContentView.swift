@@ -62,6 +62,13 @@ private extension HealthCareChartView {
                 )
             }
         }
+        .chartXAxis {
+            AxisMarks(values: .stride(by: .hour, count: 1)) { value in
+                AxisValueLabel()
+                AxisGridLine()
+                AxisTick()
+            }
+        }
     }
 
     func weeklyChart() -> some View {
@@ -105,6 +112,13 @@ private extension HealthCareChartView {
                 )
             }
         }
+        .chartXAxis {
+            AxisMarks(values: .stride(by: .month, count: 1)) { value in
+                AxisValueLabel()
+                AxisGridLine()
+                AxisTick()
+            }
+        }
     }
 
     func yearlyChart() -> some View {
@@ -114,6 +128,13 @@ private extension HealthCareChartView {
                     x: .value("月", item.startDate, unit: .month),
                     y: .value("歩数", item.value)
                 )
+            }
+        }
+        .chartXAxis {
+            AxisMarks(values: .stride(by: .month, count: 1)) { value in
+                AxisValueLabel(format: .dateTime.day().month())
+                AxisGridLine()
+                AxisTick()
             }
         }
     }
