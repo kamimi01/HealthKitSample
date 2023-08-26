@@ -11,19 +11,26 @@ import HealthKit
 
 @MainActor
 class HealthCareChartViewModel: ObservableObject {
-    @Published var isShowingError = false
-    @Published private(set) var errorMessage = ""
+    // Published という変数が他で定義されている影響なのか、「'Published' is ambiguous for type lookup in this context」のエラーが発生したので、 @SwiftUI を冒頭につけて回避
+    // - seealso: https://www.reddit.com/r/iOSProgramming/comments/1070i8z/comment/j3jxr6m/?utm_source=share&utm_medium=web2x&context=3
+    @SwiftUI.Published var isShowingError = false
+    @SwiftUI.Published private(set) var errorMessage = ""
     /// 毎日の歩数
-    @Published private(set) var hourlySteps: [HealthDataTypeValue] = []
-    @Published private(set) var weeklySteps: [HealthDataTypeValue] = []
-    @Published private(set) var monthlySteps: [HealthDataTypeValue] = []
-    @Published private(set) var everySixMonthsSteps: [HealthDataTypeValue] = []
-    @Published private(set) var yearlySteps: [HealthDataTypeValue] = []
+    @SwiftUI.Published var hourlySteps: [HealthDataTypeValue] = []
+    @SwiftUI.Published var weeklySteps: [HealthDataTypeValue] = []
+    @SwiftUI.Published var monthlySteps: [HealthDataTypeValue] = []
+    @SwiftUI.Published var everySixMonthsSteps: [HealthDataTypeValue] = []
+    @SwiftUI.Published var yearlySteps: [HealthDataTypeValue] = []
 
     @SwiftUI.Published var selectedFrequency: Frequency = .hourly
 
     private var healthStore: HKHealthStore?
     private var query: HKStatisticsCollectionQuery?
+    @SwiftUI.Published private(set) var isLoadedHourlyData = false
+    private var isLoadedWeeklyData = false
+    private var isLoadedMonthlyData = false
+    private var isLoadedEverySixMonthsData = false
+    private var isLoadedYearlyData = false
 
     func onAppear() {
         setupHealthKit()
@@ -153,6 +160,19 @@ class HealthCareChartViewModel: ObservableObject {
 
     private func updateUIFromStatistics(_ statisticsCollection: HKStatisticsCollection, frequency: Frequency, startDate: Date, endDate: Date) {
 
+        switch frequency {
+        case .hourly:
+            if isLoadedHourlyData { return }
+        case .weekly:
+            if isLoadedWeeklyData { return }
+        case .monthly:
+            if isLoadedMonthlyData { return }
+        case .everySixMonths:
+            if isLoadedEverySixMonthsData { return }
+        case .yearly:
+            if isLoadedYearlyData { return }
+        }
+
         statisticsCollection.enumerateStatistics(from: startDate, to: endDate) { [weak self] statistics, stop in
             guard let self else { return }
 
@@ -171,15 +191,20 @@ class HealthCareChartViewModel: ObservableObject {
                 switch frequency {
                 case .hourly:
                     self.hourlySteps.append(dataValue)
+                    self.isLoadedHourlyData = true
                 case .weekly:
                     self.weeklySteps.append(dataValue)
+                    self.isLoadedWeeklyData = true
                 case .monthly:
                     self.monthlySteps.append(dataValue)
+                    self.isLoadedMonthlyData = true
                 case .everySixMonths:
+                    print("dataだよ：", dataValue)
                     self.everySixMonthsSteps.append(dataValue)
+                    self.isLoadedEverySixMonthsData = true
                 case .yearly:
-                    print("dataだよ１：", dataValue)
                     self.yearlySteps.append(dataValue)
+                    self.isLoadedYearlyData = true
                 }
             }
         }

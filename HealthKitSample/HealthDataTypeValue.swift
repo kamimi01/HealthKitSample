@@ -13,4 +13,5 @@ struct HealthDataTypeValue: Identifiable {
     let startDate: Date
     let endDate: Date
     var value: Double
+    var animate = false
 }
