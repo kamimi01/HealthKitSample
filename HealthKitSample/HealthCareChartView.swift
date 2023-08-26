@@ -54,35 +54,42 @@ struct HealthCareChartView: View {
 
 private extension HealthCareChartView {
     func dailyChart() -> some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            Chart(viewModel.hourlySteps) { item in
-                BarMark(
-                    x: .value("時間", item.endDate, unit: .hour),
-                    y: .value("歩数", item.animate ? item.value : 0)
-                )
+        GroupBox("合計歩数") {
+            HStack {
+                Text("xx 歩")
+                Spacer()
             }
-            .frame(height: 300)
-            .frame(width: CGFloat(viewModel.hourlySteps.count) * 130)
-            .chartXAxis {
-                AxisMarks(preset: .extended, values: .stride(by: .hour, count: 1)) { value in
-                    AxisValueLabel()
-                    AxisGridLine()
-                    AxisTick()
+            Divider()
+            ScrollView(.horizontal, showsIndicators: false) {
+                Chart(viewModel.hourlySteps, id: \.id) {
+                    BarMark(
+                        x: .value("時間", $0.endDate, unit: .hour),
+                        y: .value("歩数", $0.animate ? $0.value : 0)
+                    )
+                }
+                .frame(height: 300)
+                .frame(width: CGFloat(viewModel.hourlySteps.count) * 130)
+                .chartXAxis {
+                    AxisMarks(preset: .extended, values: .stride(by: .hour, count: 1)) { value in
+                        AxisValueLabel()
+                        AxisGridLine()
+                        AxisTick()
+                    }
+                }
+                .chartYScale(domain: [0, maxStepCount(stepCount: viewModel.hourlySteps)])
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        animate()
+                    }
+                }
+                .onDisappear {
+                    for index in viewModel.hourlySteps.indices {
+                        viewModel.hourlySteps[index].animate = false
+                    }
                 }
             }
-            .chartYScale(domain: [0, maxStepCount(stepCount: viewModel.hourlySteps)])
-            .onAppear {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    animate()
-                }
-            }
-            .onDisappear {
-                for index in viewModel.hourlySteps.indices {
-                    viewModel.hourlySteps[index].animate = false
-                }
-            }
+            .frame(maxWidth: .infinity)
         }
-        .frame(maxWidth: .infinity)
     }
 
     func maxStepCount(stepCount: [HealthDataTypeValue]) -> Double {
@@ -95,10 +102,10 @@ private extension HealthCareChartView {
 
     func weeklyChart() -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            Chart(viewModel.weeklySteps) { item in
+            Chart(viewModel.weeklySteps, id: \.id) {
                 BarMark(
-                    x: .value("日付", item.endDate, unit: .day),
-                    y: .value("歩数", item.animate ? item.value : 0)
+                    x: .value("日付", $0.endDate, unit: .day),
+                    y: .value("歩数", $0.animate ? $0.value : 0)
                 )
             }
             .frame(width: 400, height: 300)
@@ -128,10 +135,10 @@ private extension HealthCareChartView {
 
     func monthlyChart() -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            Chart(viewModel.monthlySteps) { item in
+            Chart(viewModel.monthlySteps, id: \.id) {
                 BarMark(
-                    x: .value("日付", item.endDate, unit: .day),
-                    y: .value("歩数", item.animate ? item.value : 0)
+                    x: .value("日付", $0.endDate, unit: .day),
+                    y: .value("歩数", $0.animate ? $0.value : 0)
                 )
             }
             .frame(width: 400, height: 300)
@@ -152,10 +159,10 @@ private extension HealthCareChartView {
 
     func everySixMonthsChart() -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            Chart(viewModel.everySixMonthsSteps) { item in
+            Chart(viewModel.everySixMonthsSteps, id: \.id) {
                 BarMark(
-                    x: .value("月", item.endDate, unit: .month),
-                    y: .value("歩数", item.animate ? item.value : 0)
+                    x: .value("月", $0.endDate, unit: .month),
+                    y: .value("歩数", $0.animate ? $0.value : 0)
                 )
             }
             .frame(width: 400, height: 300)
@@ -183,10 +190,10 @@ private extension HealthCareChartView {
 
     func yearlyChart() -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            Chart(viewModel.yearlySteps) { item in
+            Chart(viewModel.yearlySteps, id: \.id) {
                 BarMark(
-                    x: .value("月", item.endDate, unit: .month),
-                    y: .value("歩数", item.animate ? item.value : 0)
+                    x: .value("月", $0.endDate, unit: .month),
+                    y: .value("歩数", $0.animate ? $0.value : 0)
                 )
             }
             .frame(width: 400, height: 300)

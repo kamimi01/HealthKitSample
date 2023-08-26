@@ -133,7 +133,7 @@ class HealthCareChartViewModel: ObservableObject {
             }
 
             if let statisticsCollection {
-                self.updateUIFromStatistics(statisticsCollection, frequency: frequency, startDate: startDate, endDate: endDate)
+                self.updateUIFromStatisticsIfNeeded(statisticsCollection, frequency: frequency, startDate: startDate, endDate: endDate)
             }
         }
 
@@ -150,7 +150,7 @@ class HealthCareChartViewModel: ObservableObject {
             }
 
             if let statisticsCollection {
-                self.updateUIFromStatistics(statisticsCollection, frequency: frequency, startDate: startDate, endDate: endDate)
+                self.updateUIFromStatisticsIfNeeded(statisticsCollection, frequency: frequency, startDate: startDate, endDate: endDate)
             }
         }
 
@@ -158,19 +158,15 @@ class HealthCareChartViewModel: ObservableObject {
         self.query = query
     }
 
-    private func updateUIFromStatistics(_ statisticsCollection: HKStatisticsCollection, frequency: Frequency, startDate: Date, endDate: Date) {
+    private func updateUIFromStatisticsIfNeeded(_ statisticsCollection: HKStatisticsCollection, frequency: Frequency, startDate: Date, endDate: Date) {
 
+        // すでにデータを読み込み済みだった場合は処理を止める
         switch frequency {
-        case .hourly:
-            if isLoadedHourlyData { return }
-        case .weekly:
-            if isLoadedWeeklyData { return }
-        case .monthly:
-            if isLoadedMonthlyData { return }
-        case .everySixMonths:
-            if isLoadedEverySixMonthsData { return }
-        case .yearly:
-            if isLoadedYearlyData { return }
+        case .hourly: if isLoadedHourlyData { return }
+        case .weekly: if isLoadedWeeklyData { return }
+        case .monthly: if isLoadedMonthlyData { return }
+        case .everySixMonths: if isLoadedEverySixMonthsData { return }
+        case .yearly: if isLoadedYearlyData { return }
         }
 
         statisticsCollection.enumerateStatistics(from: startDate, to: endDate) { [weak self] statistics, stop in
